@@ -1,0 +1,24 @@
+{
+    "name": "movie-cards-example",
+    "version": "0.1.0",
+    "description": "Movie cards example demonstrating a11y-graphql",
+    "scripts": {
+      "dev": "tsx server.ts",
+      "build": "tsc",
+      "start": "node dist/server.js"
+    },
+    "dependencies": {
+      "apollo-server": "^3.12.1",
+      "@graphql-tools/schema": "^10.0.0",
+      "graphql": "^16.8.1",
+      "react": "^18.2.0",
+      "react-dom": "^18.2.0",
+      "@apollo/client": "^3.8.0"
+    },
+    "devDependencies": {
+      "tsx": "^4.0.0",
+      "typescript": "^5.0.0",
+      "@types/react": "^18.0.0",
+      "@types/react-dom": "^18.0.0"
+    }
+  } 

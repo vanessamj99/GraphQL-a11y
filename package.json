@@ -1,0 +1,20 @@
+{
+    "name": "a11y-graphql",
+    "version": "0.1.0",
+    "description": "Selection-aware accessibility metadata for GraphQL",
+    "main": "index.js",
+    "scripts": {
+      "dev": "cd demo && npm run dev"
+    },
+    "keywords": ["graphql", "accessibility", "a11y", "schema"],
+    "author": "",
+    "license": "MIT",
+    "devDependencies": {
+      "@graphql-tools/schema": "^10.0.0",
+      "apollo-server": "^3.12.1",
+      "graphql": "^16.8.1",
+      "tsx": "^4.6.2",
+      "typescript": "^5.2.2"
+    }
+  }
+  
