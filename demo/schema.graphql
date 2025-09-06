@@ -1,0 +1,40 @@
+directive @a11yLabel(field: String!) on OBJECT | FIELD_DEFINITION
+directive @a11yToken(
+  type: String!,           # "title" | "rating" | "releaseDate" | etc.
+  field: String!,          # backing GraphQL field name
+  priority: Int = 0,
+  label: String,           # optional, for humanizer
+  labelPosition: String,   # "before" | "after" | "none"
+  unitPrefix: String,
+  unitSuffix: String,
+  number: Boolean
+) on FIELD_DEFINITION
+
+# Optional: per-type summary template
+directive @a11yTemplate(summary: String) on OBJECT
+
+enum A11yRole { BUTTON LINK HEADER IMAGE GROUP }
+enum A11yState { DISABLED EXPANDED SELECTED BUSY }
+
+type A11yToken { type: String!, value: String!, priority: Int! }
+type A11yTemplates { summary: String }
+
+type A11y {
+  label: String!
+  role: A11yRole
+  state: [A11yState!]
+  tokens: [A11yToken!]!
+  templates: A11yTemplates
+}
+
+type Movie @a11yTemplate(summary: "{title} , {rating} , {year}") {
+  id: ID!
+  title: String! @a11yLabel(field: "title") @a11yToken(type: "title", field: "title", priority: 0, labelPosition: "none")
+  releaseYear: Int @a11yToken(type: "year", field: "releaseYear", priority: 2, labelPosition: "after", number: false)
+  rating: Float @a11yToken(type: "rating", field: "rating", priority: 1, label: "rating", unitSuffix: "/10", number: true)
+  a11y: A11y!
+}
+
+type Query {
+  movies: [Movie!]!
+} 
