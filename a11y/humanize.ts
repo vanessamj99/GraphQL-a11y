@@ -10,11 +10,21 @@ const fmtNumber = (v: any, locale: string) => {
 
 export type Tok = { type: string; value: string; priority: number };
 
+export type HumanizeOptions = {
+  /**
+   * When true (per-token template placeholders), keep leading spaces in labels
+   * like " rated …" so "{title}{rating}{year}." concatenates naturally.
+   * When false/omitted (multi-token fallback join), trim each piece fully.
+   */
+  forTemplate?: boolean;
+};
+
 export function humanizeTokens(
   tokens: Tok[],
   tokenConfig: TokenConfig[],
   locale = "en",
-  sep = ", "
+  sep = ", ",
+  opts?: HumanizeOptions,
 ): string {
   const cfg = new Map(tokenConfig.map(c => [c.type, c]));
   const parts: string[] = [];
@@ -33,7 +43,8 @@ export function humanizeTokens(
     else if (pos === "after") piece = `${withUnits} ${label}`;
     // "none" → just value with units
 
-    piece = piece.replace(/\s+/g, " ").trim();
+    piece = piece.replace(/\s+/g, " ");
+    piece = opts?.forTemplate ? piece.trimEnd() : piece.trim();
     if (piece) parts.push(piece);
   }
   return parts.join(sep);

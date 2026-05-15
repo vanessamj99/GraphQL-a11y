@@ -1,127 +1,95 @@
-# GraphQL Accessibility Plugin
+# GraphQL A11y Contract Demo
 
-Selection-aware accessibility metadata for GraphQL using schema directives.
+Schema-driven accessibility semantics for GraphQL, with a runtime plugin and a generated Playwright + axe-core test flow.
 
-## Try the Demo
+## What This Repo Demonstrates
 
-1. **Install and run**:
-   ```bash
-   npm install
-   cd demo && npm install && npm run dev
-   ```
+1. The GraphQL schema carries accessibility semantics with directives.
+2. The runtime plugin exposes those semantics through `a11y`.
+3. A generator reads the same schema and emits Playwright expectations.
+4. CI fails when the UI drifts from the contract.
 
-2. **Open GraphQL Playground**: `http://localhost:4003/graphql`
+## Install
 
-3. **Try these queries**:
+```bash
+npm install
+npx playwright install chromium
+```
 
-   **Query A - Title + Year**:
-   ```graphql
-   query {
-     movies {
-       title
-       releaseYear
-       a11y {
-         label
-         tokens { type value }
-         templates { summary }
-       }
-     }
-   }
-   ```
+## Commands
 
-   **Query B - Title + Rating**:
-   ```graphql
-   query {
-     movies {
-       title
-       rating
-       a11y {
-         label
-         tokens { type value }
-         templates { summary }
-       }
-     }
-   }
-   ```
+```bash
+npm run demo:api
+npm run demo:ui
+npm run check:contract
+npm run generate:a11y
+npm run test:a11y
+npm run test
+```
 
-   **Query C - All Fields**:
-   ```graphql
-   query {
-     movies {
-       title
-       releaseYear
-       rating
-       a11y {
-         label
-         tokens { type value }
-         templates { summary }
-       }
-     }
-   }
-   ```
+## Runtime Demo
 
-Notice how the `summary` changes based on what you query! The accessibility metadata is selection-aware.
+Start the GraphQL demo:
 
-## Use with Your Data
+```bash
+npm run demo:api
+```
 
-1. **Copy the plugin**:
-   ```bash
-   cp -r a11y ./your-project/src/
-   ```
+Open `http://localhost:4003/graphql` and run:
 
-2. **Install dependencies**:
-   ```bash
-   npm install
-   ```
-   
-   Make sure your project has `graphql` and `@graphql-tools/schema` in package.json.
+```graphql
+query {
+  movies {
+    title
+    rating
+    releaseYear
+    a11y {
+      label
+      role
+      tokens { type value }
+      templates { summary }
+    }
+  }
+}
+```
 
-3. **Add to your schema**:
-   ```graphql
-   directive @a11yLabel(field: String!) on OBJECT | FIELD_DEFINITION
-   directive @a11yToken(
-     type: String!
-     field: String!
-     priority: Int = 0
-     label: String
-     labelPosition: String
-     unitPrefix: String
-     unitSuffix: String
-     number: Boolean
-   ) on FIELD_DEFINITION
-   directive @a11yTemplate(summary: String) on OBJECT
+This shows:
+- `label` comes from `@a11yLabel`
+- `role` comes from `@a11yRole`
+- `summary` comes from `@a11yTemplate`
 
-   type YourType @a11yTemplate(summary: "{name}, {price}") {
-     name: String! @a11yLabel(field: "name") @a11yToken(type: "name", field: "name", priority: 0)
-     price: Float @a11yToken(type: "price", field: "price", priority: 1, unitPrefix: "$", number: true)
-     a11y: A11y!
-   }
+## Contract + Test Demo
 
-   type A11y {
-     label: String!
-     tokens: [A11yToken!]!
-     templates: A11yTemplates
-   }
-   type A11yToken { type: String!, value: String!, priority: Int! }
-   type A11yTemplates { summary: String }
-   ```
+Generate the a11y contract artifacts:
 
-4. **Set up resolvers**:
-   ```typescript
-   import { createA11yPlugin } from './a11y/plugin';
-   
-   const { a11yRoot, A11y, A11yTemplates } = createA11yPlugin();
-   
-   const resolvers = {
-     YourType: { a11y: a11yRoot },
-     A11y,
-     A11yTemplates
-   };
-   ```
+```bash
+npm run check:contract
+npm run generate:a11y
+```
 
-## How It Works
+The generator writes files into `generated/`. Those files are intentionally ignored by git so the repo stays focused on the hand-written source you actually need to understand.
 
-- Use `@a11yToken` to mark fields that contribute to accessibility data
-- Use `@a11yTemplate` to define summary templates with placeholders like `{name}`, `{price}`
-- Only queried fields appear in the tokens and summaries
-- Empty placeholders are automatically filtered out
+Run browser checks:
+
+```bash
+npm run test:a11y
+```
+
+This launches the demo UI automatically, verifies schema-driven role/name/description expectations, and runs axe-core.
+
+## Repo Shape
+
+- `demo/schema.graphql`: the accessibility contract
+- `a11y/`: directive readers and runtime plugin
+- `scripts/check-a11y-contract.ts`: fast schema gate
+- `scripts/generate-a11y-tests.ts`: schema -> JSON + Playwright
+- `demo/ui-server.ts`: tiny semantic HTML target
+- `generated/`: generated browser artifacts, not committed
+
+## Talk Flow
+
+1. Show the schema contract.
+2. Show the GraphQL runtime output.
+3. Generate the test artifacts.
+4. Run Playwright + axe.
+5. Break one semantic attribute and re-run.

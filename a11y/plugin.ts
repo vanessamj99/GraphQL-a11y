@@ -1,14 +1,15 @@
 import { GraphQLResolveInfo } from "graphql";
 import { getSiblingFieldNames } from "./getSiblingFieldNames";
 import { humanizeTokens, Tok } from "./humanize";
-import { 
-  getLabelFieldFromDirectives, 
-  getTokenConfigsFromDirectives, 
-  getTemplateFromDirectives 
+import {
+  getLabelFieldFromDirectives,
+  getRoleFromDirectives,
+  getTokenConfigsFromDirectives,
+  getTemplateFromDirectives,
 } from "./directives";
 import { renderTemplateSmart } from "./utils/renderTemplate";
 
-const safe = (v: any) => (v == null ? "" : String(v));
+const safe = (value: unknown) => (value == null ? "" : String(value));
 
 export function createA11yPlugin() {
   const locale = "en";
@@ -26,8 +27,10 @@ export function createA11yPlugin() {
       const field = getLabelFieldFromDirectives(info.schema, typeName);
       return safe(field ? parent?.[field] : "");
     },
-    role:  () => "GROUP",
-    state: () => [],
+    role: (root: any, _args: any, _ctx: any, info: GraphQLResolveInfo) => {
+      const { typeName } = root.__a11y;
+      return getRoleFromDirectives(info.schema, typeName) ?? "GROUP";
+    },
 
     tokens: (root: any, _args: any, _ctx: any, info: GraphQLResolveInfo) => {
       const { parent, typeName } = root.__a11y;
@@ -71,11 +74,11 @@ export function createA11yPlugin() {
 
       if (template) {
         // Create humanized tokens for template rendering
-        const humanizedTokens = tokens.map(t => ({
+        const humanizedTokens = tokens.map((t) => ({
           type: t.type,
-          value: humanizeTokens([t], cfg, locale, sep).trim()
+          value: humanizeTokens([t], cfg, locale, sep, { forTemplate: true }),
         }));
-        
+
         // Use smart template rendering to handle missing placeholders and clean separators
         return renderTemplateSmart(template, humanizedTokens, sep);
       }
@@ -86,4 +89,4 @@ export function createA11yPlugin() {
   };
 
   return { a11yRoot, A11y, A11yTemplates };
-} 
+}
