@@ -9,3 +9,5 @@ node_modules/
 playwright-report/
 test-results/
 generated/
+selenium/generated/
+selenium/node_modules/

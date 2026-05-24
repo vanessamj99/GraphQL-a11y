@@ -10,8 +10,9 @@
     "noEmit": true
   },
   "include": [
-    "a11y/**/*.ts",
+    "../a11y/**/*.ts",
     "demo/**/*.ts",
-    "scripts/**/*.ts"
+    "scripts/**/*.ts",
+    "playwright.config.ts"
   ]
 }

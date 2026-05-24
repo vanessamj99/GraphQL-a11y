@@ -1,34 +1,25 @@
 {
-  "name": "graphql-a11y-contract-demo",
+  "name": "a11y-graphql",
   "version": "0.1.0",
-  "description": "Schema-driven accessibility contract demo for GraphQL",
+  "description": "Selection-aware accessibility metadata for GraphQL using schema directives",
   "private": true,
   "scripts": {
-    "demo:api": "node --import tsx ./demo/server.ts",
-    "demo:ui": "node --import tsx ./demo/ui-server.ts",
-    "check:contract": "node --import tsx ./scripts/check-a11y-contract.ts",
-    "generate:a11y": "node --import tsx ./scripts/generate-a11y-tests.ts",
-    "test:a11y": "playwright test",
-    "test": "npm run check:contract && npm run generate:a11y && npm run test:a11y"
+    "dev": "cd demo && npm run dev",
+    "check:contract": "node --import tsx ./scripts/check-a11y-contract.ts"
   },
   "keywords": [
     "graphql",
     "accessibility",
     "a11y",
-    "playwright",
-    "axe-core",
-    "schema"
+    "schema",
+    "server-driven-ui"
   ],
   "license": "MIT",
-  "dependencies": {
-    "@graphql-tools/schema": "^10.0.0",
-    "apollo-server": "^3.12.1",
-    "graphql": "^16.8.1"
-  },
   "devDependencies": {
-    "@axe-core/playwright": "^4.11.1",
-    "@playwright/test": "^1.58.2",
+    "@graphql-tools/schema": "^10.0.0",
     "@types/node": "^22.0.0",
+    "apollo-server": "^3.12.1",
+    "graphql": "^16.8.1",
     "tsx": "^4.6.2",
     "typescript": "^5.9.3"
   }

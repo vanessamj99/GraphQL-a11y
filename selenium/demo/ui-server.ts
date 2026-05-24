@@ -1,11 +1,12 @@
 import http from "http";
 import { readFileSync } from "fs";
 import path from "path";
+import { fileURLToPath } from "url";
 
-const ROOT = process.cwd();
+const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 
 const movies = JSON.parse(
-  readFileSync(path.join(ROOT, "demo", "movies.fixture.json"), "utf8"),
+  readFileSync(path.join(REPO_ROOT, "demo", "movies.fixture.json"), "utf8"),
 ) as Array<{
   id: string;
   title: string;
@@ -21,7 +22,6 @@ function escapeHtml(text: string): string {
     .replace(/"/g, "&quot;");
 }
 
-/** One spoken sentence per movie so VoiceOver reads the whole row at once. */
 function movieSentence(movie: {
   title: string;
   rating: number;

@@ -1,41 +1,23 @@
-# GraphQL A11y Contract Demo
+# GraphQL Accessibility Plugin
 
-Schema-driven accessibility semantics for GraphQL, with a runtime plugin and a generated Playwright + axe-core test flow.
+Server-driven UI should ship accessibility semantics, not just layout and copy. This repo embeds a11y hints (labels, roles, tokens, templates) directly in your GraphQL schema using directives, so clients can render accessible components by default.
 
-## What This Repo Demonstrates
+Built for [Devoxx Greece](https://devoxx.gr/) — schema contract, runtime plugin, and CI validation. For the Playwright + axe-core generator demo, see [`selenium/`](selenium/).
 
-1. The GraphQL schema carries accessibility semantics with directives.
-2. The runtime plugin exposes those semantics through `a11y`.
-3. A generator reads the same schema and emits Playwright expectations.
-4. CI fails when the UI drifts from the contract.
+## Related Talks & Writing
 
-## Install
+- GraphQLConf base talk: https://www.youtube.com/watch?v=ttmp_zkHH_0
+- Newsletter: https://vanessaonmobile.substack.com/p/designing-accessible-experiences
+- SeleniumConf contract tests: [`selenium/README.md`](selenium/README.md)
+
+## Try the Demo
 
 ```bash
 npm install
-npx playwright install chromium
+cd demo && npm install && npm run dev
 ```
 
-## Commands
-
-```bash
-npm run demo:api
-npm run demo:ui
-npm run check:contract
-npm run generate:a11y
-npm run test:a11y
-npm run test
-```
-
-## Runtime Demo
-
-Start the GraphQL demo:
-
-```bash
-npm run demo:api
-```
-
-Open `http://localhost:4003/graphql` and run:
+Open GraphQL Playground at `http://localhost:4003/graphql` and run:
 
 ```graphql
 query {
@@ -53,43 +35,53 @@ query {
 }
 ```
 
-This shows:
-- `label` comes from `@a11yLabel`
-- `role` comes from `@a11yRole`
-- `summary` comes from `@a11yTemplate`
+Change the selection (drop `rating` or `releaseYear`) and watch `templates.summary` adapt — the metadata is selection-aware.
 
-## Contract + Test Demo
+## Directive Catalog
 
-Generate the a11y contract artifacts:
+| Directive | Purpose |
+|-----------|---------|
+| `@a11yLabel(field: String!)` | Names the backing field used as the accessible label |
+| `@a11yRole(role: A11yRole!)` | Declares semantic role (`GROUP`, `BUTTON`, `LINK`, …) |
+| `@a11yToken(...)` | Marks fields that contribute tokens to summaries |
+| `@a11yTemplate(summary: String)` | Template with `{placeholder}` tokens for descriptions |
+
+See [`demo/schema.graphql`](demo/schema.graphql) for a copy-ready example.
+
+## Client Mapping (Compose / ARIA)
+
+| Schema `A11yRole` | Android Compose | Web ARIA |
+|-------------------|-----------------|----------|
+| `GROUP` | `Semantics { collectionItem() }` | `role="group"` or list item context |
+| `BUTTON` | `Role.Button` | `role="button"` |
+| `LINK` | `Role.Link` | `role="link"` |
+| `IMAGE` | `ContentDescription` + image role | `role="img"` |
+
+Map `a11y.label` → accessible name, `a11y.templates.summary` → description or `aria-describedby`, and `a11y.role` → platform semantics.
+
+## Schema Contract Check (CI)
+
+Fast regression gate that fails when required directives disappear:
 
 ```bash
 npm run check:contract
-npm run generate:a11y
 ```
 
-The generator writes files into `generated/`. Those files are intentionally ignored by git so the repo stays focused on the hand-written source you actually need to understand.
-
-Run browser checks:
-
-```bash
-npm run test:a11y
-```
-
-This launches the demo UI automatically, verifies schema-driven role/name/description expectations, and runs axe-core.
+This validates `demo/schema.graphql` still defines `@a11yLabel`, `@a11yRole`, and `@a11yTemplate` on `Movie`.
 
 ## Repo Shape
 
-- `demo/schema.graphql`: the accessibility contract
-- `a11y/`: directive readers and runtime plugin
-- `scripts/check-a11y-contract.ts`: fast schema gate
-- `scripts/generate-a11y-tests.ts`: schema -> JSON + Playwright
-- `demo/ui-server.ts`: tiny semantic HTML target
-- `generated/`: generated browser artifacts, not committed
+```
+a11y/                  # Directive readers + runtime plugin
+demo/                  # GraphQL schema + Apollo demo server
+scripts/               # Schema contract gate (check-a11y-contract.ts)
+docs/                  # Rollout checklist + mapping notes
+selenium/              # SeleniumConf: Playwright + axe-core generator
+```
 
-## Talk Flow
+## How It Works
 
-1. Show the schema contract.
-2. Show the GraphQL runtime output.
-3. Generate the test artifacts.
-4. Run Playwright + axe.
-5. Break one semantic attribute and re-run.
+- `@a11yToken` marks fields that contribute to accessibility data
+- `@a11yTemplate` defines summary templates with placeholders like `{title}`, `{rating}`
+- Only queried fields appear in tokens and summaries
+- Empty placeholders are filtered automatically
