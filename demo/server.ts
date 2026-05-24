@@ -4,11 +4,14 @@ import { readFileSync } from "fs";
 import { join } from "path";
 import { createA11yPlugin } from "../a11y/plugin";
 
-const moviesData = [
-  { id: "1", title: "Inception",       releaseYear: 2010, rating: 8.8 },
-  { id: "2", title: "The Dark Knight", releaseYear: 2008, rating: 9.0 },
-  { id: "3", title: "Interstellar",    releaseYear: 2014, rating: 8.6 },
-];
+const moviesData = JSON.parse(
+  readFileSync(join(__dirname, "movies.fixture.json"), "utf8"),
+) as Array<{
+  id: string;
+  title: string;
+  releaseYear: number;
+  rating: number;
+}>;
 
 const { a11yRoot, A11y, A11yTemplates } = createA11yPlugin();
 
@@ -20,51 +23,51 @@ const resolvers = {
 };
 
 async function main() {
-  const typeDefs = readFileSync(join(__dirname, "schema.graphql"), "utf-8");
+  const typeDefs = readFileSync(join(__dirname, "schema.graphql"), "utf8");
   const schema = makeExecutableSchema({ typeDefs, resolvers });
   const server = new ApolloServer({ schema, introspection: true });
   const { url } = await server.listen({ port: 4003 });
-  console.log(`🚀 Movie Cards Demo running at ${url}`);
+
+  console.log(`GraphQL a11y demo running at ${url}`);
   console.log(`
-Try these queries to see selection-aware accessibility:
+Try these queries:
 
-# Card A: title + releaseYear
-query {
-  movies {
-    title
-    releaseYear
-    a11y {
-      label
-      tokens { type value }
-      templates { summary }
-    }
-  }
-}
-
-# Card B: title + rating
+# Query A: name + description source fields
 query {
   movies {
     title
     rating
+    releaseYear
     a11y {
       label
+      role
       tokens { type value }
       templates { summary }
     }
   }
 }
 
-# Card C: only label (tokens/summary never computed)
+# Query B: only title
 query {
   movies {
     title
-    a11y { label }
+    a11y {
+      label
+      role
+      templates { summary }
+    }
   }
 }
 
-Notice: Card A includes YEAR tokens and "Inception, 2010 year" summary, Card B includes RATING tokens and "Inception, 8.8/10 rating" summary!
-
-The accessibility metadata is now read from GraphQL directives in the schema, making it truly schema-embedded!
+What to point out:
+- label comes from @a11yLabel(field: "title")
+- role comes from @a11yRole(role: GROUP)
+- summary comes from @a11yTemplate(summary: "{title}, {rating}, {year}.")
+- tokens/summary are selection-aware
   `);
 }
-main().catch(console.error); 
+
+main().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});

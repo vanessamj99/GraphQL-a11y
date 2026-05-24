@@ -1,6 +1,10 @@
 import { GraphQLResolveInfo, Kind, FieldNode } from "graphql";
 
-/** Collect sibling field names next to the nearest `a11y` in the path. */
+/**
+ * Collect sibling schema field names next to the nearest `a11y` in the path.
+ * We traverse using response names (alias or field name), but return the
+ * underlying schema field names so directive matching still works with aliases.
+ */
 export function getSiblingFieldNames(info: GraphQLResolveInfo): Set<string> {
   const fullPath: Array<string | number> = [];
   for (let p: any = info.path; p; p = p.prev) fullPath.unshift(p.key);
@@ -21,8 +25,8 @@ export function getSiblingFieldNames(info: GraphQLResolveInfo): Set<string> {
   const names = new Set<string>();
   for (const s of selections) {
     if (s.kind === Kind.FIELD && s.name.value !== "a11y") {
-      names.add(s.alias?.value ?? s.name.value);
+      names.add(s.name.value);
     }
   }
   return names;
-} 
+}

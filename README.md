@@ -1,127 +1,87 @@
 # GraphQL Accessibility Plugin
 
-Selection-aware accessibility metadata for GraphQL using schema directives.
+Server driven UI should ship accessibility semantics, not just layout and copy. This repo embeds a11y hints (labels, roles, tokens, templates) directly in your GraphQL schema using directives, so clients can render accessible components by default.
+
+Built for [Devoxx Greece](https://devoxx.gr/) — schema contract, runtime plugin, and CI validation. For the Playwright + axe-core generator demo, see [`selenium/`](selenium/).
+
+## Related Talks & Writing
+
+- GraphQLConf base talk: https://www.youtube.com/watch?v=ttmp_zkHH_0
+- Newsletter: https://vanessaonmobile.substack.com/p/designing-accessible-experiences
+- SeleniumConf contract tests: [`selenium/README.md`](selenium/README.md)
 
 ## Try the Demo
 
-1. **Install and run**:
-   ```bash
-   npm install
-   cd demo && npm install && npm run dev
-   ```
+```bash
+npm install
+cd demo && npm install && npm run dev
+```
 
-2. **Open GraphQL Playground**: `http://localhost:4003/graphql`
+Open GraphQL Playground at `http://localhost:4003/graphql` and run:
 
-3. **Try these queries**:
+```graphql
+query {
+  movies {
+    title
+    rating
+    releaseYear
+    a11y {
+      label
+      role
+      tokens { type value }
+      templates { summary }
+    }
+  }
+}
+```
 
-   **Query A - Title + Year**:
-   ```graphql
-   query {
-     movies {
-       title
-       releaseYear
-       a11y {
-         label
-         tokens { type value }
-         templates { summary }
-       }
-     }
-   }
-   ```
+Change the selection (drop `rating` or `releaseYear`) and watch `templates.summary` adapt — the metadata is selection-aware.
 
-   **Query B - Title + Rating**:
-   ```graphql
-   query {
-     movies {
-       title
-       rating
-       a11y {
-         label
-         tokens { type value }
-         templates { summary }
-       }
-     }
-   }
-   ```
+## Directive Catalog
 
-   **Query C - All Fields**:
-   ```graphql
-   query {
-     movies {
-       title
-       releaseYear
-       rating
-       a11y {
-         label
-         tokens { type value }
-         templates { summary }
-       }
-     }
-   }
-   ```
+| Directive | Purpose |
+|-----------|---------|
+| `@a11yLabel(field: String!)` | Names the backing field used as the accessible label |
+| `@a11yRole(role: A11yRole!)` | Declares semantic role (`GROUP`, `BUTTON`, `LINK`, …) |
+| `@a11yToken(...)` | Marks fields that contribute tokens to summaries |
+| `@a11yTemplate(summary: String)` | Template with `{placeholder}` tokens for descriptions |
 
-Notice how the `summary` changes based on what you query! The accessibility metadata is selection-aware.
+See [`demo/schema.graphql`](demo/schema.graphql) for a copy-ready example.
 
-## Use with Your Data
+## Client Mapping (Compose / ARIA)
 
-1. **Copy the plugin**:
-   ```bash
-   cp -r a11y ./your-project/src/
-   ```
+| Schema `A11yRole` | Android Compose | Web ARIA |
+|-------------------|-----------------|----------|
+| `GROUP` | `Semantics { collectionItem() }` | `role="group"` or list item context |
+| `BUTTON` | `Role.Button` | `role="button"` |
+| `LINK` | `Role.Link` | `role="link"` |
+| `IMAGE` | `ContentDescription` + image role | `role="img"` |
 
-2. **Install dependencies**:
-   ```bash
-   npm install
-   ```
-   
-   Make sure your project has `graphql` and `@graphql-tools/schema` in package.json.
+Map `a11y.label` → accessible name, `a11y.templates.summary` → description or `aria-describedby`, and `a11y.role` → platform semantics.
 
-3. **Add to your schema**:
-   ```graphql
-   directive @a11yLabel(field: String!) on OBJECT | FIELD_DEFINITION
-   directive @a11yToken(
-     type: String!
-     field: String!
-     priority: Int = 0
-     label: String
-     labelPosition: String
-     unitPrefix: String
-     unitSuffix: String
-     number: Boolean
-   ) on FIELD_DEFINITION
-   directive @a11yTemplate(summary: String) on OBJECT
+## Schema Contract Check (CI)
 
-   type YourType @a11yTemplate(summary: "{name}, {price}") {
-     name: String! @a11yLabel(field: "name") @a11yToken(type: "name", field: "name", priority: 0)
-     price: Float @a11yToken(type: "price", field: "price", priority: 1, unitPrefix: "$", number: true)
-     a11y: A11y!
-   }
+Fast regression gate that fails when required directives disappear:
 
-   type A11y {
-     label: String!
-     tokens: [A11yToken!]!
-     templates: A11yTemplates
-   }
-   type A11yToken { type: String!, value: String!, priority: Int! }
-   type A11yTemplates { summary: String }
-   ```
+```bash
+npm run check:contract
+```
 
-4. **Set up resolvers**:
-   ```typescript
-   import { createA11yPlugin } from './a11y/plugin';
-   
-   const { a11yRoot, A11y, A11yTemplates } = createA11yPlugin();
-   
-   const resolvers = {
-     YourType: { a11y: a11yRoot },
-     A11y,
-     A11yTemplates
-   };
-   ```
+This validates `demo/schema.graphql` still defines `@a11yLabel`, `@a11yRole`, and `@a11yTemplate` on `Movie`.
+
+## Repo Shape
+
+```
+a11y/                  # Directive readers + runtime plugin
+demo/                  # GraphQL schema + Apollo demo server
+scripts/               # Schema contract gate (check-a11y-contract.ts)
+docs/                  # Rollout checklist + mapping notes
+selenium/              # SeleniumConf: Playwright + axe-core generator
+```
 
 ## How It Works
 
-- Use `@a11yToken` to mark fields that contribute to accessibility data
-- Use `@a11yTemplate` to define summary templates with placeholders like `{name}`, `{price}`
-- Only queried fields appear in the tokens and summaries
-- Empty placeholders are automatically filtered out
+- `@a11yToken` marks fields that contribute to accessibility data
+- `@a11yTemplate` defines summary templates with placeholders like `{title}`, `{rating}`
+- Only queried fields appear in tokens and summaries
+- Empty placeholders are filtered automatically

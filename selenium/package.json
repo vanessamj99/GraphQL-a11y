@@ -1,0 +1,28 @@
+{
+  "name": "graphql-a11y-selenium",
+  "version": "0.1.0",
+  "description": "Schema-driven Playwright + axe-core contract tests for GraphQL a11y",
+  "private": true,
+  "scripts": {
+    "demo:ui": "node --import tsx ./demo/ui-server.ts",
+    "generate:a11y": "node --import tsx ./scripts/generate-a11y-tests.ts",
+    "test:a11y": "playwright test",
+    "test": "npm run generate:a11y && npm run test:a11y"
+  },
+  "keywords": [
+    "graphql",
+    "accessibility",
+    "playwright",
+    "axe-core",
+    "selenium"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "@axe-core/playwright": "^4.11.1",
+    "@playwright/test": "^1.58.2",
+    "@types/node": "^22.0.0",
+    "graphql": "^16.8.1",
+    "tsx": "^4.6.2",
+    "typescript": "^5.9.3"
+  }
+}
