@@ -1,5 +1,7 @@
 # GraphQL Accessibility Plugin
 
+NOT FROM THE New York Times. An outside project
+
 Server driven UI should ship accessibility semantics, not just layout and copy. This repo embeds a11y hints (labels, roles, tokens, templates) directly in your GraphQL schema using directives, so clients can render accessible components by default.
 
 Built for [Devoxx Greece](https://devoxx.gr/) — schema contract, runtime plugin, and CI validation. For the Playwright + axe-core generator demo, see [`selenium/`](selenium/).
